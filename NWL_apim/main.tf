@@ -1,3 +1,5 @@
+# module creates APIM infrastructure (minus app gateway) for project SIMS:64061
+
 # Variables
 
 variable network_resource_group_name {}
