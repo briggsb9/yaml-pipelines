@@ -31,7 +31,7 @@ locals {
   listener_name_2                = "APIM_Portal_${var.enviroment}"
   listener_name_3                = "APIM_Management_${var.enviroment}"
   listener_name_4                = "APIM_SCM_${var.enviroment}"
-  request_routing_rule_name_1    = "APIM_PROXY_${var.enviroment}_RULE"
+  request_routing_rule_name_1    = "APIM_PROXY_UAT_RULE"
   request_routing_rule_name_2    = "APIM_PORTAL_${var.enviroment}_RULE"
   request_routing_rule_name_3    = "APIM_MANAGEMENT_${var.enviroment}_RULE"
   request_routing_rule_name_4    = "APIM_SCM_${var.enviroment}_RULE"
