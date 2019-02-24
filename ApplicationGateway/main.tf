@@ -64,6 +64,12 @@ resource "azurerm_application_gateway" "network" {
     subnet_id = "${var.subnet_id}"
   }
 
+  ssl_certificate {
+    name     = "${var.enviroment}Wildcard"
+    data     = "${base64encode(file("${var.enviroment}_api.pfx"))}"
+    password = "${var.ssl_certificate_password}"
+  }
+
   frontend_port {
     name = "${local.frontend_port_name}"
     port = 443
@@ -109,13 +115,9 @@ resource "azurerm_application_gateway" "network" {
     name                           = "${local.listener_name_1}"
     frontend_ip_configuration_name = "${local.frontend_ip_configuration_name}"
     frontend_port_name             = "${local.frontend_port_name}"
-    hostname                       = "apim-shared.api.${var.enviroment}.nwl.co.uk"
+    host_name                      = "apim-shared.api.${var.enviroment}.nwl.co.uk"
     protocol                       = "Https"
-    ssl_certificate {
-        name     = "${var.enviroment}Wildcard"
-        data     = "${base64encode(file("${var.enviroment}_api.pfx"))}"
-        password = "${var.ssl_certificate_password}"
-    }
+    ssl_certificate_name           = "${var.enviroment}Wildcard"
   }
 
   request_routing_rule {
