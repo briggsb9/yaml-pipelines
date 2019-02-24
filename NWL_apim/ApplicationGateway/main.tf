@@ -5,7 +5,6 @@ variable location {}
 variable enviroment_uppercase {}
 variable subnet_id {}
 variable ssl_certificate_password {}
-variable appgw_name {}
 variable proxy_host_name {}
 variable portal_host_name {}
 variable management_host_name {}
