@@ -70,6 +70,11 @@ resource "azurerm_application_gateway" "network" {
     password = "${var.ssl_certificate_password}"
   }
 
+  authentication_certificate {
+    name = "${var.enviroment}BackendCer"
+    data = "${base64encode(file("${var.enviroment}_api.cer"))}"
+ }
+
   frontend_port {
     name = "${local.frontend_port_name}"
     port = 443
@@ -91,9 +96,9 @@ resource "azurerm_application_gateway" "network" {
         protocol                    = "Https"
         request_timeout             = 180
         probe_name                  = "${local.probe_name_1}"
+
         authentication_certificate {
             name = "${var.enviroment}BackendCer"
-            data = "${base64encode(file("${var.enviroment}_api.cer"))}"
         }
   }
 
