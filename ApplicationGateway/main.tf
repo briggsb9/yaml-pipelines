@@ -3,7 +3,8 @@
 variable app_gateway_name {}
 variable resource_group_name {}
 variable location {}
-variable enviroment {}
+variable enviroment_uppercase {}
+variable enviroment_lowercase {}
 variable subnet_id {}
 variable ssl_certificate_password {}
 
@@ -27,14 +28,14 @@ locals {
   http_setting_name_2            = "APIM_PoolPortalSetting"
   http_setting_name_3            = "APIM_PoolManSetting"
   http_setting_name_4            = "APIM_PoolSCMSetting"
-  listener_name_1                = "APIM_PROXY_${var.enviroment}"
-  listener_name_2                = "APIM_Portal_${var.enviroment}"
-  listener_name_3                = "APIM_Management_${var.enviroment}"
-  listener_name_4                = "APIM_SCM_${var.enviroment}"
-  request_routing_rule_name_1    = "APIM_PROXY_${var.enviroment}_RULE"
-  request_routing_rule_name_2    = "APIM_PORTAL_${var.enviroment}_RULE"
-  request_routing_rule_name_3    = "APIM_MANAGEMENT_${var.enviroment}_RULE"
-  request_routing_rule_name_4    = "APIM_SCM_${var.enviroment}_RULE"
+  listener_name_1                = "APIM_PROXY_${var.enviroment_uppercase}"
+  listener_name_2                = "APIM_Portal_${var.enviroment_uppercase}"
+  listener_name_3                = "APIM_Management_${var.enviroment_uppercase}"
+  listener_name_4                = "APIM_SCM_${var.enviroment_uppercase}"
+  request_routing_rule_name_1    = "APIM_PROXY_${var.enviroment_uppercase}_RULE"
+  request_routing_rule_name_2    = "APIM_PORTAL_${var.enviroment_uppercase}_RULE"
+  request_routing_rule_name_3    = "APIM_MANAGEMENT_${var.enviroment_uppercase}_RULE"
+  request_routing_rule_name_4    = "APIM_SCM_${var.enviroment_uppercase}_RULE"
   probe_name_1                   = "apimproxyprobe"
   probe_name_2                   = "apimportalprobe"
   probe_name_3                   = "apimmanprobe"
@@ -65,14 +66,14 @@ resource "azurerm_application_gateway" "network" {
   }
 
   ssl_certificate {
-    name     = "${var.enviroment}Wildcard"
-    data     = "${base64encode(file("${var.enviroment}_api.pfx"))}"
+    name     = "${var.enviroment_uppercase}Wildcard"
+    data     = "${base64encode(file("${var.enviroment_lowercase}_api.pfx"))}"
     password = "${var.ssl_certificate_password}"
   }
 
   authentication_certificate {
-    name = "${var.enviroment}BackendCer"
-    data = "${base64encode(file("${var.enviroment}_api.cer"))}"
+    name = "${var.enviroment_uppercase}BackendCer"
+    data = "${base64encode(file("${var.enviroment_lowercase}_api.cer"))}"
  }
 
   frontend_port {
@@ -98,7 +99,7 @@ resource "azurerm_application_gateway" "network" {
         probe_name                  = "${local.probe_name_1}"
 
         authentication_certificate {
-            name = "${var.enviroment}BackendCer"
+            name = "${var.enviroment_uppercase}BackendCer"
         }
   }
 
@@ -106,7 +107,7 @@ resource "azurerm_application_gateway" "network" {
     name                = "${local.probe_name_1}"
     protocol            = "https"
     path                = "/status-0123456789abcdef"
-    host                = "apim-shared.api.${var.enviroment}.nwl.co.uk"
+    host                = "apim-shared.api.${var.enviroment_lowercase}.nwl.co.uk"
     interval            = "30"
     timeout             = "120"
     unhealthy_threshold = "8"
@@ -120,9 +121,9 @@ resource "azurerm_application_gateway" "network" {
     name                           = "${local.listener_name_1}"
     frontend_ip_configuration_name = "${local.frontend_ip_configuration_name}"
     frontend_port_name             = "${local.frontend_port_name}"
-    host_name                      = "apim-shared.api.${var.enviroment}.nwl.co.uk"
+    host_name                      = "apim-shared.api.${var.enviroment_lowercase}.nwl.co.uk"
     protocol                       = "Https"
-    ssl_certificate_name           = "${var.enviroment}Wildcard"
+    ssl_certificate_name           = "${var.enviroment_uppercase}Wildcard"
   }
 
   request_routing_rule {
