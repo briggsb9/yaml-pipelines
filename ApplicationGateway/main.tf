@@ -127,7 +127,7 @@ resource "azurerm_application_gateway" "appgw" {
         status_code     = ["200-399"]
     }
 
-    probe {
+  probe {
     name                = "${local.probe_name_2}"
     protocol            = "https"
     path                = "/signin"
