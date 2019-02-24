@@ -119,7 +119,7 @@ resource "azurerm_application_gateway" "network" {
   }
 
   request_routing_rule {
-    name                       = "${local.request_routing_rule_name_1}"
+    name                       = "APIM_PROXY_UAT_RULE"
     rule_type                  = "Basic"
     http_listener_name         = "${local.listener_name_1}"
     backend_address_pool_name  = "${local.backend_address_pool_name}"
