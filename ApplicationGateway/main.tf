@@ -87,7 +87,7 @@ resource "azurerm_application_gateway" "network" {
         probe_name                  = "${local.probe_name_1}"
         authentication_certificate {
             name = "${var.enviroment}BackendCer"
-            data = "${base64encode(file("${var.enviroment}api.cer"))}"
+            data = "${base64encode(file("${var.enviroment}_api.cer"))}"
         }
   }
 
@@ -113,7 +113,7 @@ resource "azurerm_application_gateway" "network" {
     protocol                       = "Https"
     ssl_certificate {
         name     = "${var.enviroment}Wildcard"
-        data     = "${base64encode(file("${var.enviroment}api.pfx"))}"
+        data     = "${base64encode(file("${var.enviroment}_api.pfx"))}"
         password = "${var.ssl_certificate_password}"
     }
   }
