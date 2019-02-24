@@ -3,10 +3,15 @@
 variable resource_group_name {}
 variable location {}
 variable enviroment_uppercase {}
-variable enviroment_lowercase {}
 variable subnet_id {}
 variable ssl_certificate_password {}
-
+variable appgw_name {}
+variable proxy_host_name {}
+variable portal_host_name {}
+variable management_host_name {}
+variable scm_host_name {}
+variable auth_certificate_name_cer {}
+variable ssl_certificate_name_pfx {}
 
 # Create Application Gateway 
 
@@ -66,13 +71,13 @@ resource "azurerm_application_gateway" "appgw" {
 
   ssl_certificate {
     name     = "${var.enviroment_uppercase}Wildcard"
-    data     = "${base64encode(file("${var.enviroment_lowercase}_api.pfx"))}"
+    data     = "${base64encode(file("${var.ssl_certificate_name_pfx}"))}"
     password = "${var.ssl_certificate_password}"
   }
 
   authentication_certificate {
     name = "${var.enviroment_uppercase}BackendCer"
-    data = "${base64encode(file("${var.enviroment_lowercase}_api.cer"))}"
+    data = "${base64encode(file("${var.auth_certificate_name_cer}"))}"
   }
 
   frontend_port {
@@ -145,7 +150,7 @@ resource "azurerm_application_gateway" "appgw" {
     name                = "${local.probe_name_1}"
     protocol            = "https"
     path                = "/status-0123456789abcdef"
-    host                = "apim-shared.api.${var.enviroment_lowercase}.nwl.co.uk"
+    host                = "${var.proxy_host_name}"
     interval            = "30"
     timeout             = "120"
     unhealthy_threshold = "8"
@@ -159,7 +164,7 @@ resource "azurerm_application_gateway" "appgw" {
     name                = "${local.probe_name_2}"
     protocol            = "https"
     path                = "/signin"
-    host                = "apim-shared-portal.api.${var.enviroment_lowercase}.nwl.co.uk"
+    host                = "${var.portal_host_name}"
     interval            = "60"
     timeout             = "300"
     unhealthy_threshold = "8"
@@ -173,7 +178,7 @@ resource "azurerm_application_gateway" "appgw" {
     name                = "${local.probe_name_3}"
     protocol            = "https"
     path                = "/apis?api-version=2018-01-01"
-    host                = "apim-shared-management.api.${var.enviroment_lowercase}.nwl.co.uk"
+    host                = "${var.management_host_name}"
     interval            = "30"
     timeout             = "120"
     unhealthy_threshold = "8"
@@ -187,7 +192,7 @@ resource "azurerm_application_gateway" "appgw" {
     name                = "${local.probe_name_4}"
     protocol            = "https"
     path                = "/"
-    host                = "apim-shared-scm.api.${var.enviroment_lowercase}.nwl.co.uk"
+    host                = "${var.scm_host_name}"
     interval            = "30"
     timeout             = "120"
     unhealthy_threshold = "8"
@@ -201,7 +206,7 @@ resource "azurerm_application_gateway" "appgw" {
     name                           = "${local.listener_name_1}"
     frontend_ip_configuration_name = "${local.frontend_ip_configuration_name}"
     frontend_port_name             = "${local.frontend_port_name}"
-    host_name                      = "apim-shared.api.${var.enviroment_lowercase}.nwl.co.uk"
+    host_name                      = "${var.proxy_host_name}"
     protocol                       = "Https"
     ssl_certificate_name           = "${var.enviroment_uppercase}Wildcard"
   }
@@ -210,7 +215,7 @@ resource "azurerm_application_gateway" "appgw" {
     name                           = "${local.listener_name_2}"
     frontend_ip_configuration_name = "${local.frontend_ip_configuration_name}"
     frontend_port_name             = "${local.frontend_port_name}"
-    host_name                      = "apim-shared-portal.api.${var.enviroment_lowercase}.nwl.co.uk"
+    host_name                      = "${var.portal_host_name}"
     protocol                       = "Https"
     ssl_certificate_name           = "${var.enviroment_uppercase}Wildcard"
   }
@@ -219,7 +224,7 @@ resource "azurerm_application_gateway" "appgw" {
     name                           = "${local.listener_name_3}"
     frontend_ip_configuration_name = "${local.frontend_ip_configuration_name}"
     frontend_port_name             = "${local.frontend_port_name}"
-    host_name                      = "apim-shared-management.api.${var.enviroment_lowercase}.nwl.co.uk"
+    host_name                      = "${var.management_host_name}"
     protocol                       = "Https"
     ssl_certificate_name           = "${var.enviroment_uppercase}Wildcard"
   }
@@ -228,7 +233,7 @@ resource "azurerm_application_gateway" "appgw" {
     name                           = "${local.listener_name_4}"
     frontend_ip_configuration_name = "${local.frontend_ip_configuration_name}"
     frontend_port_name             = "${local.frontend_port_name}"
-    host_name                      = "apim-shared-scm.api.${var.enviroment_lowercase}.nwl.co.uk"
+    host_name                      = "${var.scm_host_name}"
     protocol                       = "Https"
     ssl_certificate_name           = "${var.enviroment_uppercase}Wildcard"
   }
