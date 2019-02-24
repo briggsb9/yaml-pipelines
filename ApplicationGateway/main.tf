@@ -73,7 +73,7 @@ resource "azurerm_application_gateway" "appgw" {
   authentication_certificate {
     name = "${var.enviroment_uppercase}BackendCer"
     data = "${base64encode(file("${var.enviroment_lowercase}_api.cer"))}"
- }
+  }
 
   frontend_port {
     name = "${local.frontend_port_name}"
