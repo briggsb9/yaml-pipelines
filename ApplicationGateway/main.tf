@@ -13,7 +13,7 @@ variable ssl_certificate_password {}
 
 # Create App Gateway IP
 resource "azurerm_public_ip" "pubip" {
-  name                = "${var.app_gateway_name}-pip"
+  name                = "Shared-${var.enviroment_uppercase}-agw-pip"
   resource_group_name = "${var.resource_group_name}"
   location            = "${var.location}"
   allocation_method   = "Dynamic"
