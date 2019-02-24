@@ -12,6 +12,7 @@ variable scm_host_name {}
 variable auth_certificate_name_cer {}
 variable ssl_certificate_name_pfx {}
 variable appgw_public_ip_name {}
+variable appgw_name {}
 
 # Create Application Gateway 
 
@@ -47,7 +48,7 @@ locals {
 }
 
 resource "azurerm_application_gateway" "appgw" {
-  name                = "Shared-${var.enviroment_uppercase}-agw"
+  name                = "${var.appgw_name}"
   resource_group_name = "${var.resource_group_name}"
   location            = "${var.location}"
 
