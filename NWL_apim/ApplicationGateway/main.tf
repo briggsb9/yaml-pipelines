@@ -11,12 +11,13 @@ variable management_host_name {}
 variable scm_host_name {}
 variable auth_certificate_name_cer {}
 variable ssl_certificate_name_pfx {}
+variable appgw_public_ip_name {}
 
 # Create Application Gateway 
 
 # Create App Gateway IP
 resource "azurerm_public_ip" "pubip" {
-  name                = "Shared-${var.enviroment_uppercase}-agw-pip"
+  name                = "${var.appgw_public_ip_name}"
   resource_group_name = "${var.resource_group_name}"
   location            = "${var.location}"
   allocation_method   = "Dynamic"
