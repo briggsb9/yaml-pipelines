@@ -1,6 +1,5 @@
 # Variables
 
-variable app_gateway_name {}
 variable resource_group_name {}
 variable location {}
 variable enviroment_uppercase {}
@@ -43,7 +42,7 @@ locals {
 }
 
 resource "azurerm_application_gateway" "network" {
-  name                = "${var.app_gateway_name}"
+  name                = "Shared-${var.enviroment_uppercase}-agw"
   resource_group_name = "${var.resource_group_name}"
   location            = "${var.location}"
 
