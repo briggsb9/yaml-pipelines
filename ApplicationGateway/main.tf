@@ -90,28 +90,29 @@ resource "azurerm_application_gateway" "appgw" {
   }
 
   backend_http_settings {
-        name                        = "${local.http_setting_name_1}"
-        cookie_based_affinity       = "Disabled"
-        port                        = 443
-        protocol                    = "Https"
-        request_timeout             = 180
-        probe_name                  = "${local.probe_name_1}"
+    name                        = "${local.http_setting_name_1}"
+    cookie_based_affinity       = "Disabled"
+    port                        = 443
+    protocol                    = "Https"
+    request_timeout             = 180
+    probe_name                  = "${local.probe_name_1}"
 
-        authentication_certificate {
-            name = "${var.enviroment_uppercase}BackendCer"
-        }
+    authentication_certificate {
+        name = "${var.enviroment_uppercase}BackendCer"
+    }
+  }
 
   backend_http_settings {
-        name                        = "${local.http_setting_name_2}"
-        cookie_based_affinity       = "Disabled"
-        port                        = 443
-        protocol                    = "Https"
-        request_timeout             = 180
-        probe_name                  = "${local.probe_name_2}"
+    name                        = "${local.http_setting_name_2}"
+    cookie_based_affinity       = "Disabled"
+    port                        = 443
+    protocol                    = "Https"
+    request_timeout             = 180
+    probe_name                  = "${local.probe_name_2}"
 
-        authentication_certificate {
-            name = "${var.enviroment_uppercase}BackendCer"
-        }
+    authentication_certificate {
+        name = "${var.enviroment_uppercase}BackendCer"
+    }
   }
 
   probe {
@@ -126,6 +127,7 @@ resource "azurerm_application_gateway" "appgw" {
     match {
         status_code     = ["200-399"]
     }
+  }
 
   probe {
     name                = "${local.probe_name_2}"
