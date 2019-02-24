@@ -115,6 +115,32 @@ resource "azurerm_application_gateway" "appgw" {
     }
   }
 
+  backend_http_settings {
+    name                        = "${local.http_setting_name_3}"
+    cookie_based_affinity       = "Disabled"
+    port                        = 443
+    protocol                    = "Https"
+    request_timeout             = 180
+    probe_name                  = "${local.probe_name_3}"
+
+    authentication_certificate {
+        name = "${var.enviroment_uppercase}BackendCer"
+    }
+  }
+
+  backend_http_settings {
+    name                        = "${local.http_setting_name_4}"
+    cookie_based_affinity       = "Disabled"
+    port                        = 443
+    protocol                    = "Https"
+    request_timeout             = 180
+    probe_name                  = "${local.probe_name_4}"
+
+    authentication_certificate {
+        name = "${var.enviroment_uppercase}BackendCer"
+    }
+  }
+
   probe {
     name                = "${local.probe_name_1}"
     protocol            = "https"
@@ -143,6 +169,34 @@ resource "azurerm_application_gateway" "appgw" {
     }  
   }
 
+  probe {
+    name                = "${local.probe_name_3}"
+    protocol            = "https"
+    path                = "/apis?api-version=2018-01-01"
+    host                = "apim-shared-management.api.${var.enviroment_lowercase}.nwl.co.uk"
+    interval            = "30"
+    timeout             = "120"
+    unhealthy_threshold = "8"
+
+    match {
+        status_code     = ["200-399"]
+    }  
+  }
+
+  probe {
+    name                = "${local.probe_name_4}"
+    protocol            = "https"
+    path                = "/"
+    host                = "apim-shared-scm.api.${var.enviroment_lowercase}.nwl.co.uk"
+    interval            = "30"
+    timeout             = "120"
+    unhealthy_threshold = "8"
+
+    match {
+        status_code     = ["200-399"]
+    }  
+  }
+
   http_listener {
     name                           = "${local.listener_name_1}"
     frontend_ip_configuration_name = "${local.frontend_ip_configuration_name}"
@@ -161,6 +215,24 @@ resource "azurerm_application_gateway" "appgw" {
     ssl_certificate_name           = "${var.enviroment_uppercase}Wildcard"
   }
 
+  http_listener {
+    name                           = "${local.listener_name_3}"
+    frontend_ip_configuration_name = "${local.frontend_ip_configuration_name}"
+    frontend_port_name             = "${local.frontend_port_name}"
+    host_name                      = "apim-shared-management.api.${var.enviroment_lowercase}.nwl.co.uk"
+    protocol                       = "Https"
+    ssl_certificate_name           = "${var.enviroment_uppercase}Wildcard"
+  }
+
+  http_listener {
+    name                           = "${local.listener_name_4}"
+    frontend_ip_configuration_name = "${local.frontend_ip_configuration_name}"
+    frontend_port_name             = "${local.frontend_port_name}"
+    host_name                      = "apim-shared-scm.api.${var.enviroment_lowercase}.nwl.co.uk"
+    protocol                       = "Https"
+    ssl_certificate_name           = "${var.enviroment_uppercase}Wildcard"
+  }
+
   request_routing_rule {
     name                       = "${local.request_routing_rule_name_1}"
     rule_type                  = "Basic"
@@ -175,5 +247,23 @@ resource "azurerm_application_gateway" "appgw" {
     http_listener_name         = "${local.listener_name_2}"
     backend_address_pool_name  = "${local.backend_address_pool_name}"
     backend_http_settings_name = "${local.http_setting_name_2}"
+  }
+}
+
+  request_routing_rule {
+    name                       = "${local.request_routing_rule_name_3}"
+    rule_type                  = "Basic"
+    http_listener_name         = "${local.listener_name_3}"
+    backend_address_pool_name  = "${local.backend_address_pool_name}"
+    backend_http_settings_name = "${local.http_setting_name_3}"
+  }
+}
+
+  request_routing_rule {
+    name                       = "${local.request_routing_rule_name_4}"
+    rule_type                  = "Basic"
+    http_listener_name         = "${local.listener_name_4}"
+    backend_address_pool_name  = "${local.backend_address_pool_name}"
+    backend_http_settings_name = "${local.http_setting_name_4}"
   }
 }
