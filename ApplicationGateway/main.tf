@@ -41,7 +41,7 @@ locals {
   probe_name_4                   = "apimscmprobe"
 }
 
-resource "azurerm_application_gateway" "network" {
+resource "azurerm_application_gateway" "appgw" {
   name                = "Shared-${var.enviroment_uppercase}-agw"
   resource_group_name = "${var.resource_group_name}"
   location            = "${var.location}"
