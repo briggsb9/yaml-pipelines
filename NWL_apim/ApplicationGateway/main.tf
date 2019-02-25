@@ -158,6 +158,7 @@ resource "azurerm_application_gateway" "appgw" {
 
     match {
         status_code     = ["200-399"]
+        body            = ""
     }
   }
 
@@ -172,6 +173,7 @@ resource "azurerm_application_gateway" "appgw" {
 
     match {
         status_code     = ["200-399"]
+        body            = ""
     }  
   }
 
@@ -186,6 +188,7 @@ resource "azurerm_application_gateway" "appgw" {
 
     match {
         status_code     = ["200-399"]
+        body            = ""
     }  
   }
 
@@ -200,6 +203,7 @@ resource "azurerm_application_gateway" "appgw" {
 
     match {
         status_code     = ["200-399"]
+        body            = ""
     }  
   }
 
