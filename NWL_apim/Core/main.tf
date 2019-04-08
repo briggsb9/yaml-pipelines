@@ -47,7 +47,7 @@ resource "azurerm_network_security_group" "apimnsg" {
 
     tags {
       Environment = "${var.envtag}"
-      Partner = "${var.creatortag}"
+      Creator = "${var.creatortag}"
     }
 }
 
@@ -107,7 +107,7 @@ resource "azurerm_network_security_group" "vmnsg" {
 
     tags {
       Environment = "${var.envtag}"
-      Partner = "${var.creatortag}"
+      Creator = "${var.creatortag}"
     }
 }
 
@@ -125,7 +125,7 @@ resource "azurerm_network_interface" "vmnic" {
 
     tags {
       Environment = "${var.envtag}"
-      Partner = "${var.creatortag}"
+      Creator = "${var.creatortag}"
     }
 }
 
@@ -147,7 +147,7 @@ resource "azurerm_storage_account" "vmstorageaccount" {
 
     tags {
       Environment = "${var.envtag}"
-      Partner = "${var.creatortag}"
+      Creator = "${var.creatortag}"
     }
 }
 
@@ -191,7 +191,7 @@ resource "azurerm_virtual_machine" "windowsvm" {
 
     tags {
       Environment = "${var.envtag}"
-      Partner = "${var.creatortag}"
+      Creator = "${var.creatortag}"
     }
 }
 
@@ -208,7 +208,7 @@ resource "azurerm_relay_namespace" "test" {
 
   tags {
       Environment = "${var.envtag}"
-      Partner = "${var.creatortag}"
+      Creator = "${var.creatortag}"
   }
 
 }
