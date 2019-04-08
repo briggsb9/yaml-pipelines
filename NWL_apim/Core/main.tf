@@ -1,4 +1,5 @@
 # module creates APIM infrastructure (minus app gateway) for project SIMS:64061
+# Ben Briggs - Silversands
 
 # Variables
 
@@ -17,7 +18,7 @@ variable hc_vm_admin_username {}
 variable hc_vm_admin_password {}
 variable relay_name {}
 variable envtag {}
-variable partnertag {}
+variable creatortag {}
 
 
 # Create Subnets
@@ -46,7 +47,7 @@ resource "azurerm_network_security_group" "apimnsg" {
 
     tags {
       Environment = "${var.envtag}"
-      Partner = "${var.partnertag}"
+      Partner = "${var.creatortag}"
     }
 }
 
@@ -106,7 +107,7 @@ resource "azurerm_network_security_group" "vmnsg" {
 
     tags {
       Environment = "${var.envtag}"
-      Partner = "${var.partnertag}"
+      Partner = "${var.creatortag}"
     }
 }
 
@@ -124,7 +125,7 @@ resource "azurerm_network_interface" "vmnic" {
 
     tags {
       Environment = "${var.envtag}"
-      Partner = "${var.partnertag}"
+      Partner = "${var.creatortag}"
     }
 }
 
@@ -146,7 +147,7 @@ resource "azurerm_storage_account" "vmstorageaccount" {
 
     tags {
       Environment = "${var.envtag}"
-      Partner = "${var.partnertag}"
+      Partner = "${var.creatortag}"
     }
 }
 
@@ -190,7 +191,7 @@ resource "azurerm_virtual_machine" "windowsvm" {
 
     tags {
       Environment = "${var.envtag}"
-      Partner = "${var.partnertag}"
+      Partner = "${var.creatortag}"
     }
 }
 
@@ -207,7 +208,7 @@ resource "azurerm_relay_namespace" "test" {
 
   tags {
       Environment = "${var.envtag}"
-      Partner = "${var.partnertag}"
+      Partner = "${var.creatortag}"
   }
 
 }

@@ -1,3 +1,6 @@
+# module creates an application gateway for project SIMS:64061
+# Ben Briggs - Silversands
+
 # Variables
 
 variable resource_group_name {}
