@@ -66,6 +66,7 @@ resource "azurerm_application_gateway" "appgw" {
     firewall_mode    = "Prevention"
     rule_set_type    = "OWASP"
     rule_set_version = "3.0"
+    request_body_check = "false"
   }
 
   gateway_ip_configuration {
