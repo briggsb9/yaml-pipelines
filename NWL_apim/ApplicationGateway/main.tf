@@ -67,6 +67,10 @@ resource "azurerm_application_gateway" "appgw" {
     rule_set_type    = "OWASP"
     rule_set_version = "3.0"
     request_body_check = "false"
+    exclusion {
+      match_variable = "RequestArgNames"
+      selector_match_operator = "Equals"
+      selector = "URL"
   }
 
   gateway_ip_configuration {
