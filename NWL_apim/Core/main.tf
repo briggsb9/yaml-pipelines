@@ -36,6 +36,7 @@ resource "azurerm_subnet" "frontend" {
   resource_group_name  = "${var.vnet_resource_group_name}"
   virtual_network_name = "${var.virtual_network_name}"
   address_prefix       = "${var.ag_subnet}"
+  network_security_group_id = "${azurerm_network_security_group.apimnsg.id}"
 }
 
 # Create NSG for APIM
