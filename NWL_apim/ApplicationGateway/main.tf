@@ -73,6 +73,10 @@ resource "azurerm_application_gateway" "appgw" {
       selector = "URL"
       }
   }
+  
+  ssl_policy {
+    disabled_protocols = ["TLSv1_0, TLSv1_1"]
+  }
 
   gateway_ip_configuration {
     name      = "Subnet"
