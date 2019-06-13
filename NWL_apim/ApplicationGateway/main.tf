@@ -81,13 +81,13 @@ resource "azurerm_application_gateway" "appgw" {
 
   ssl_certificate {
     name     = "${var.enviroment_uppercase}Wildcard"
-    data     = "${base64encode(file("${var.ssl_certificate_name_pfx}"))}"
+    data     = "${filebase64("${var.ssl_certificate_name_pfx}")}"
     password = "${var.ssl_certificate_password}"
   }
 
   authentication_certificate {
     name = "${var.enviroment_uppercase}BackendCer"
-    data = "${base64encode(file("${var.auth_certificate_name_cer}"))}"
+    data = "${filebase64("${var.auth_certificate_name_cer}")}"
   }
 
   frontend_port {
