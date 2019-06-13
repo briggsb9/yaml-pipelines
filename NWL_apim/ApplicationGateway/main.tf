@@ -16,6 +16,8 @@ variable auth_certificate_name_cer {}
 variable ssl_certificate_name_pfx {}
 variable appgw_public_ip_name {}
 variable appgw_name {}
+variable envtag {}
+variable creatortag {}
 
 # Create Application Gateway 
 
