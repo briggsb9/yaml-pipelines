@@ -71,6 +71,7 @@ resource "azurerm_application_gateway" "appgw" {
       match_variable = "RequestArgNames"
       selector_match_operator = "Equals"
       selector = "URL"
+      }
   }
 
   gateway_ip_configuration {
