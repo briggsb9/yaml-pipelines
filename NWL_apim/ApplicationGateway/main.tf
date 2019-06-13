@@ -277,7 +277,6 @@ resource "azurerm_application_gateway" "appgw" {
     backend_http_settings_name = "${local.http_setting_name_2}"
   }
 
-
   request_routing_rule {
     name                       = "${local.request_routing_rule_name_3}"
     rule_type                  = "Basic"
@@ -286,7 +285,6 @@ resource "azurerm_application_gateway" "appgw" {
     backend_http_settings_name = "${local.http_setting_name_3}"
   }
 
-
   request_routing_rule {
     name                       = "${local.request_routing_rule_name_4}"
     rule_type                  = "Basic"
@@ -294,4 +292,9 @@ resource "azurerm_application_gateway" "appgw" {
     backend_address_pool_name  = "${local.backend_address_pool_name}"
     backend_http_settings_name = "${local.http_setting_name_4}"
   }
+
+  tags = {
+    Environment = "${var.envtag}"
+    Creator = "${var.creatortag}"
+    }
 }
