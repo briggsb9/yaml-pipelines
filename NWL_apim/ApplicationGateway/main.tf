@@ -72,7 +72,7 @@ resource "azurerm_application_gateway" "appgw" {
     exclusion {
       match_variable = "RequestArgNames"
       selector_match_operator = "Equals"
-      selector = "doc_query"
+      selector = "docs_query"
       }
     exclusion {
       match_variable = "RequestArgNames"
