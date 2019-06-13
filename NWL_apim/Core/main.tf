@@ -45,7 +45,7 @@ resource "azurerm_network_security_group" "apimnsg" {
   location            = "${var.location}"
   resource_group_name = "${var.network_resource_group_name}"
 
-    tags {
+    tags = {
       Environment = "${var.envtag}"
       Creator = "${var.creatortag}"
     }
@@ -105,7 +105,7 @@ resource "azurerm_network_security_group" "vmnsg" {
     location            = "${var.location}"
     resource_group_name = "${var.network_resource_group_name}"
 
-    tags {
+    tags = {
       Environment = "${var.envtag}"
       Creator = "${var.creatortag}"
     }
@@ -123,7 +123,7 @@ resource "azurerm_network_interface" "vmnic" {
         private_ip_address_allocation = "dynamic"
     }
 
-    tags {
+    tags = {
       Environment = "${var.envtag}"
       Creator = "${var.creatortag}"
     }
@@ -145,7 +145,7 @@ resource "azurerm_storage_account" "vmstorageaccount" {
     account_replication_type = "LRS"
     account_tier = "Standard"
 
-    tags {
+    tags = {
       Environment = "${var.envtag}"
       Creator = "${var.creatortag}"
     }
@@ -189,7 +189,7 @@ resource "azurerm_virtual_machine" "windowsvm" {
         storage_uri = "${azurerm_storage_account.vmstorageaccount.primary_blob_endpoint}"
     }
 
-    tags {
+    tags = {
       Environment = "${var.envtag}"
       Creator = "${var.creatortag}"
     }
@@ -206,7 +206,7 @@ resource "azurerm_relay_namespace" "test" {
     name = "Standard"
   }
 
-  tags {
+  tags = {
       Environment = "${var.envtag}"
       Creator = "${var.creatortag}"
   }
