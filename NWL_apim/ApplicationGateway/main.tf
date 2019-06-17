@@ -81,9 +81,6 @@ resource "azurerm_application_gateway" "appgw" {
       }
   }
   
-  ssl_policy {
-   disabled_protocols = ""
-  }
 
   gateway_ip_configuration {
     name      = "Subnet"
