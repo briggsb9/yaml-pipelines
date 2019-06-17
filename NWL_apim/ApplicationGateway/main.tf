@@ -62,7 +62,12 @@ resource "azurerm_application_gateway" "appgw" {
     tier     = "WAF"
     capacity = 1
   }
-
+  
+   ssl_policy {
+    policy_type = "Predefined"
+    policy_name = "AppGwSslPolicy20170401S"
+  }
+  
   waf_configuration {
     enabled          = "true"
     firewall_mode    = "Prevention"
@@ -81,7 +86,6 @@ resource "azurerm_application_gateway" "appgw" {
       }
   }
   
-
   gateway_ip_configuration {
     name      = "Subnet"
     subnet_id = "${var.subnet_id}"
