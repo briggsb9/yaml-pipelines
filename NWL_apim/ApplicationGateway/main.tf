@@ -82,7 +82,8 @@ resource "azurerm_application_gateway" "appgw" {
   }
   
   ssl_policy {
-    disabled_protocols = ["TLSv1_0", "TLSv1_1"]
+    policy type = "Predefined"
+    policy name = "AppGwSslPolicy20170401S"
   }
 
   gateway_ip_configuration {
