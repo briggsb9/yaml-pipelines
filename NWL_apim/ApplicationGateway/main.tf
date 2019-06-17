@@ -82,8 +82,8 @@ resource "azurerm_application_gateway" "appgw" {
   }
   
   ssl_policy {
-    policy type = "Predefined"
-    policy name = "AppGwSslPolicy20170401S"
+    policy_type = "Predefined"
+    policy_name = "AppGwSslPolicy20170401S"
   }
 
   gateway_ip_configuration {
