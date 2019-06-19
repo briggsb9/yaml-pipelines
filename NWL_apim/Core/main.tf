@@ -12,10 +12,6 @@ variable apim_subnetname {}
 variable location {}
 variable ag_subnet {}
 variable agw_subnetname {}
-variable hc_vm_subnet_id {}
-variable hc_vm_name {}
-variable hc_vm_admin_username {}
-variable hc_vm_admin_password {}
 variable relay_name {}
 variable envtag {}
 variable creatortag {}
