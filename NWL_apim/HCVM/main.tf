@@ -1,3 +1,19 @@
+# module creates Hybrid Connection Virtual machine for project SIMS:64061
+# Ben Briggs - Silversands
+
+# Variables
+
+variable network_resource_group_name {}
+variable network_security_group_name {}
+variable location {}
+variable hc_vm_subnet_id {}
+variable hc_vm_name {}
+variable hc_vm_admin_username {}
+variable hc_vm_admin_password {}
+variable envtag {}
+variable creatortag {}
+
+
 # Create Virtual Machine
 
 resource "azurerm_network_security_group" "vmnsg" {
