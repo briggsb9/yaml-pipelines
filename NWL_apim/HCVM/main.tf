@@ -12,6 +12,7 @@ variable hc_vm_admin_username {}
 variable hc_vm_admin_password {}
 variable envtag {}
 variable creatortag {}
+variable avset_name {}
 
 
 # Create Virtual Machine
@@ -67,9 +68,19 @@ resource "azurerm_storage_account" "vmstorageaccount" {
     }
 }
 
+resource "azurerm_availability_set" "avset" {
+ name                         = "${var.avset_name}"
+ location                     = "${var.location}"
+ resource_group_name          = "${var.network_resource_group_name}"
+ platform_fault_domain_count  = 2
+ platform_update_domain_count = 2
+ managed                      = true
+}
+
 resource "azurerm_virtual_machine" "windowsvm" {
     name                  = "${var.hc_vm_name}"
     location              = "${var.location}"
+    availability_set_id   = "${azurerm_availability_set.avset.id}"
     resource_group_name   = "${var.network_resource_group_name}"
     network_interface_ids = ["${azurerm_network_interface.vmnic.id}"]
     vm_size               = "Standard_B2s"
