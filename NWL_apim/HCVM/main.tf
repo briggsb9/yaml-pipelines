@@ -69,12 +69,17 @@ resource "azurerm_storage_account" "vmstorageaccount" {
 }
 
 resource "azurerm_availability_set" "avset" {
- name                         = "${var.avset_name}"
- location                     = "${var.location}"
- resource_group_name          = "${var.network_resource_group_name}"
- platform_fault_domain_count  = 2
- platform_update_domain_count = 2
- managed                      = true
+     name                         = "${var.avset_name}"
+     location                     = "${var.location}"
+     resource_group_name          = "${var.network_resource_group_name}"
+     platform_fault_domain_count  = 2
+     platform_update_domain_count = 2
+     managed                      = true
+    
+     tags = {
+      Environment = "${var.envtag}"
+      Creator = "${var.creatortag}"
+    }
 }
 
 resource "azurerm_virtual_machine" "windowsvm" {
