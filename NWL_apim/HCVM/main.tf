@@ -12,6 +12,7 @@ variable hc_vm_admin_username {}
 variable hc_vm_admin_password {}
 variable envtag {}
 variable creatortag {}
+variable updatemanagementtag {}
 variable avset_name {}
 
 
@@ -124,5 +125,6 @@ resource "azurerm_virtual_machine" "windowsvm" {
     tags = {
       Environment = "${var.envtag}"
       Creator = "${var.creatortag}"
+      UpdateManagement = "${var.updatemanagementtag}"
     }
 }
