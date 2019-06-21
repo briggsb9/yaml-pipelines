@@ -13,8 +13,8 @@ variable location {}
 variable ag_subnet {}
 variable agw_subnetname {}
 variable relay_name {}
-variable envtag {}
-variable creatortag {}
+variable env_tag {}
+variable creator_tag {}
 
 
 # Create Subnets
@@ -43,8 +43,8 @@ resource "azurerm_network_security_group" "apimnsg" {
   resource_group_name = "${var.network_resource_group_name}"
 
     tags = {
-      Environment = "${var.envtag}"
-      Creator = "${var.creatortag}"
+      Environment = "${var.env_tag}"
+      Creator = "${var.creator_tag}"
     }
 }
 
@@ -107,8 +107,8 @@ resource "azurerm_relay_namespace" "test" {
   }
 
   tags = {
-      Environment = "${var.envtag}"
-      Creator = "${var.creatortag}"
+      Environment = "${var.env_tag}"
+      Creator = "${var.creator_tag}"
   }
 
 }
