@@ -10,9 +10,9 @@ variable hc_vm_subnet_id {}
 variable hc_vm_name {}
 variable hc_vm_admin_username {}
 variable hc_vm_admin_password {}
-variable envtag {}
-variable creatortag {}
-variable updatemanagementtag {}
+variable env_tag {}
+variable creator_tag {}
+variable updatemanagement_tag {}
 variable avset_name {}
 
 
@@ -24,8 +24,8 @@ resource "azurerm_network_security_group" "vmnsg" {
     resource_group_name = "${var.network_resource_group_name}"
 
     tags = {
-      Environment = "${var.envtag}"
-      Creator = "${var.creatortag}"
+      Environment = "${var.env_tag}"
+      Creator = "${var.creator_tag}"
     }
 }
 
@@ -42,8 +42,8 @@ resource "azurerm_network_interface" "vmnic" {
     }
 
     tags = {
-      Environment = "${var.envtag}"
-      Creator = "${var.creatortag}"
+      Environment = "${var.env_tag}"
+      Creator = "${var.creator_tag}"
     }
 }
 
@@ -64,8 +64,8 @@ resource "azurerm_storage_account" "vmstorageaccount" {
     account_tier = "Standard"
 
     tags = {
-      Environment = "${var.envtag}"
-      Creator = "${var.creatortag}"
+      Environment = "${var.env_tag}"
+      Creator = "${var.creator_tag}"
     }
 }
 
@@ -78,8 +78,8 @@ resource "azurerm_availability_set" "avset" {
      managed                      = true
     
      tags = {
-      Environment = "${var.envtag}"
-      Creator = "${var.creatortag}"
+      Environment = "${var.env_tag}"
+      Creator = "${var.creator_tag}"
     }
 }
 
@@ -123,8 +123,8 @@ resource "azurerm_virtual_machine" "windowsvm" {
     }
 
     tags = {
-      Environment = "${var.envtag}"
-      Creator = "${var.creatortag}"
-      UpdateManagement = "${var.updatemanagementtag}"
+      Environment = "${var.env_tag}"
+      Creator = "${var.creator_tag}"
+      UpdateManagement = "${var.updatemanagement_tag}"
     }
 }
