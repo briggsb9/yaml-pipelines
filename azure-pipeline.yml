@@ -1,0 +1,51 @@
+# Example multistage YAML pipeline for Terraform in Azure Devops.
+
+name: HubServices-Prod
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    include:
+    - HubServices-Prod/env
+
+variables:
+- group: Terraform-HubServices
+- name: state-key
+  value: 'hubservices.tfstate'
+
+stages:
+- stage: Review
+  jobs:
+  - job: Plan
+    pool:
+      vmImage: 'Ubuntu-16.04'
+    continueOnError: true
+    steps:
+    - script: terraform init -backend-config="resource_group_name=$(resource-group)" -backend-config="storage_account_name=$(storage-account)" -backend-config="container_name=$(container-name)" -backend-config="key=$(state-key)" -backend-config="access_key=$(access-key)"
+      workingDirectory: ./HubServices-Prod/env
+    - script: terraform plan -var="client-id=$(client-id)" -var="client-secret=$(client-secret)" -var="subscription-id=$(subscription-id)" -var="tenant-id=$(tenant-id)"
+      workingDirectory: ./HubServices-Prod/env
+- stage: Deploy
+  jobs:
+  - job: Apply
+    pool:
+      vmImage: 'Ubuntu-16.04'
+    continueOnError: true
+    steps:
+    - script: terraform init -backend-config="resource_group_name=$(resource-group)" -backend-config="storage_account_name=$(storage-account)" -backend-config="container_name=$(container-name)" -backend-config="key=$(state-key)" -backend-config="access_key=$(access-key)"
+      workingDirectory: ./HubServices-Prod/env
+    - script: terraform apply -auto-approve -var="client-id=$(client-id)" -var="client-secret=$(client-secret)" -var="subscription-id=$(subscription-id)" -var="tenant-id=$(tenant-id)"
+      workingDirectory: ./HubServices-Prod/env    
+    # track deployments on the environment
+  - deployment: HubServices_IaC
+    pool:
+      vmImage: 'Ubuntu-16.04'
+    # creates an environment if it doesn’t exist
+    environment: 'Plan HubServices Prod'
+    strategy:
+      # default deployment strategy
+      runOnce:
+        deploy:
+          steps:
+          - script: echo Not Currently in Use
