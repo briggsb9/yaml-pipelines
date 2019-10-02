@@ -1,18 +1,16 @@
-# Example multistage YAML pipeline for Terraform in Azure Devops.
-
-name: HubServices-Prod
+name: 'Name'
 trigger:
   branches:
     include:
     - master
   paths:
     include:
-    - HubServices-Prod/env
+    - '/env'
 
 variables:
-- group: Terraform-HubServices
+- group: Variable-Group
 - name: state-key
-  value: 'hubservices.tfstate'
+  value: 'state.tfstate'
 
 stages:
 - stage: Review
@@ -20,29 +18,39 @@ stages:
   - job: Plan
     pool:
       vmImage: 'Ubuntu-16.04'
-    continueOnError: true
+    continueOnError: false
     steps:
+    - task: TerraformInstaller@0
+      inputs:
+        terraformVersion: '0.12.9'
     - script: terraform init -backend-config="resource_group_name=$(resource-group)" -backend-config="storage_account_name=$(storage-account)" -backend-config="container_name=$(container-name)" -backend-config="key=$(state-key)" -backend-config="access_key=$(access-key)"
-      workingDirectory: ./HubServices-Prod/env
-    - script: terraform plan -var="client-id=$(client-id)" -var="client-secret=$(client-secret)" -var="subscription-id=$(subscription-id)" -var="tenant-id=$(tenant-id)"
-      workingDirectory: ./HubServices-Prod/env
+      workingDirectory: './Plan HubServices Prod/env'
+      displayName: 'Terraform init'
+    - script: terraform plan -var="client-id=$(client-id)" -var="client-secret=$(client-secret)" -var="subscription-id=$(subscription-id)" -var="subscription-id-2=$(subscription-id-2)" -var="subscription-id-3=$(subscription-id-3)" -var="tenant-id=$(tenant-id)"
+      workingDirectory: '/env'
+      displayName: 'Terraform Plan'
 - stage: Deploy
   jobs:
   - job: Apply
     pool:
       vmImage: 'Ubuntu-16.04'
-    continueOnError: true
+    continueOnError: false
     steps:
+    - task: TerraformInstaller@0
+      inputs:
+        terraformVersion: '0.12.9'
     - script: terraform init -backend-config="resource_group_name=$(resource-group)" -backend-config="storage_account_name=$(storage-account)" -backend-config="container_name=$(container-name)" -backend-config="key=$(state-key)" -backend-config="access_key=$(access-key)"
-      workingDirectory: ./HubServices-Prod/env
-    - script: terraform apply -auto-approve -var="client-id=$(client-id)" -var="client-secret=$(client-secret)" -var="subscription-id=$(subscription-id)" -var="tenant-id=$(tenant-id)"
-      workingDirectory: ./HubServices-Prod/env    
+      workingDirectory: '/env'
+      displayName: 'Terraform init'
+    - script: terraform apply -auto-approve -var="client-id=$(client-id)" -var="client-secret=$(client-secret)" -var="subscription-id=$(subscription-id)" -var="subscription-id-2=$(subscription-id-2)" -var="subscription-id-3=$(subscription-id-3)" -var="tenant-id=$(tenant-id)"
+      workingDirectory: '/env'
+      displayName: 'Terraform Apply'
     # track deployments on the environment
-  - deployment: HubServices_IaC
+  - deployment: HubServicesProd_IaC
     pool:
       vmImage: 'Ubuntu-16.04'
     # creates an environment if it doesn’t exist
-    environment: 'Plan HubServices Prod'
+    environment: 'Your environment'
     strategy:
       # default deployment strategy
       runOnce:
