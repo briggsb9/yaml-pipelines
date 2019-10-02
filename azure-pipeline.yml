@@ -1,17 +1,23 @@
+# Azure DevOps YAML multistage pipeline for Terraform.
 name: 'Name'
+
+# Set the branch and folder to trigger the pipeline.
 trigger:
   branches:
     include:
     - master
   paths:
     include:
-    - '/env'
-
+    - './env'
+    
+# Specify the variable group linked to the pipeline and the name of the state file.
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?view=azure-devops&tabs=yaml
 variables:
 - group: Variable-Group
 - name: state-key
   value: 'state.tfstate'
-
+  
+# Start the first 'Review' stage
 stages:
 - stage: Review
   jobs:
@@ -19,16 +25,21 @@ stages:
     pool:
       vmImage: 'Ubuntu-16.04'
     continueOnError: false
+    # Install the latest version of Terraform using task: https://marketplace.visualstudio.com/items?itemName=charleszipp.azure-pipelines-tasks-terraform
     steps:
     - task: TerraformInstaller@0
       inputs:
         terraformVersion: '0.12.9'
+    # Initialize and plan terraform using native commands and variable references. 
+    # https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops&tabs=yaml%2Cbatch
     - script: terraform init -backend-config="resource_group_name=$(resource-group)" -backend-config="storage_account_name=$(storage-account)" -backend-config="container_name=$(container-name)" -backend-config="key=$(state-key)" -backend-config="access_key=$(access-key)"
-      workingDirectory: './Plan HubServices Prod/env'
+      workingDirectory: './env'
       displayName: 'Terraform init'
-    - script: terraform plan -var="client-id=$(client-id)" -var="client-secret=$(client-secret)" -var="subscription-id=$(subscription-id)" -var="subscription-id-2=$(subscription-id-2)" -var="subscription-id-3=$(subscription-id-3)" -var="tenant-id=$(tenant-id)"
+    - script: terraform plan -var="client-id=$(client-id)" -var="client-secret=$(client-secret)" -var="subscription-id=$(subscription-id)" -var="tenant-id=$(tenant-id)"
       workingDirectory: '/env'
       displayName: 'Terraform Plan'
+# Start the 'Deploy' stage once approved.
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/process/approvals?view=azure-devops
 - stage: Deploy
   jobs:
   - job: Apply
@@ -40,13 +51,13 @@ stages:
       inputs:
         terraformVersion: '0.12.9'
     - script: terraform init -backend-config="resource_group_name=$(resource-group)" -backend-config="storage_account_name=$(storage-account)" -backend-config="container_name=$(container-name)" -backend-config="key=$(state-key)" -backend-config="access_key=$(access-key)"
-      workingDirectory: '/env'
+      workingDirectory: './env'
       displayName: 'Terraform init'
-    - script: terraform apply -auto-approve -var="client-id=$(client-id)" -var="client-secret=$(client-secret)" -var="subscription-id=$(subscription-id)" -var="subscription-id-2=$(subscription-id-2)" -var="subscription-id-3=$(subscription-id-3)" -var="tenant-id=$(tenant-id)"
+    - script: terraform apply -auto-approve -var="client-id=$(client-id)" -var="client-secret=$(client-secret)" -var="subscription-id=$(subscription-id)" -var="tenant-id=$(tenant-id)"
       workingDirectory: '/env'
       displayName: 'Terraform Apply'
     # track deployments on the environment
-  - deployment: HubServicesProd_IaC
+  - deployment: DeploymentName
     pool:
       vmImage: 'Ubuntu-16.04'
     # creates an environment if it doesn’t exist
@@ -56,4 +67,4 @@ stages:
       runOnce:
         deploy:
           steps:
-          - script: echo Not Currently in Use
+          - script: echo A message or script here
