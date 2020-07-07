@@ -1,0 +1,84 @@
+# ARM Template What-If pipeline using complete mode. WARNING This WILL remove anything in the resource group not defined in the template specified
+
+trigger:
+- "*"
+
+stages:
+  - stage: Preview
+    jobs:
+      - job: 'Preview'
+        displayName: Preview Solution
+        pool:
+          vmimage: windows-latest
+        steps:
+        - task: AzureResourceManagerTemplateDeployment@3
+          displayName: Validate ARM
+          inputs:
+            deploymentScope: 'Resource Group'
+            azureResourceManagerConnection: 'YOUR CONNECTION'
+            subscriptionId: 'YOUR SUBSCRIPTION ID'
+            action: 'Create Or Update Resource Group'
+            resourceGroupName: 'YOUR RESOURCE GROUP NAME'
+            location: 'West Europe'
+            templateLocation: 'Linked artifact'
+            csmFile: '$(Build.SourcesDirectory)/YOUR DIRECTORY/azuredeploy.json'
+            csmParametersFile: '$(Build.SourcesDirectory)/YOUR DIRECTORY/azuredeploy.parameters.json'
+            deploymentMode: 'Validation'
+            deploymentName: 'ADF'
+        - task: PowerShell@2
+          inputs:
+            targetType: 'inline'
+            script: 'Install-Module -Name Az.Resources -Force -Scope CurrentUser'
+        - task: AzurePowerShell@5
+          displayName: What-If Results
+          inputs:
+            azureSubscription: 'YOUR SUBSCRIPTION'
+            ScriptType: 'InlineScript'
+            Inline: |
+              $Parameters = @{
+                ResourcegroupName     = "YOUR RESOURCE GROUP NAME"
+                Templatefile          = ".\YOUR DIRECTORY/azuredeploy.json"
+                TemplateParameterfile = ".\YOUR DIRECTORY/azuredeploy.parameters.json"
+                Mode                  = 'Complete'
+              }
+              $Result = Get-AzResourceGroupDeploymentWhatIfResult @Parameters
+              $Result
+            azurePowerShellVersion: 'LatestVersion'
+  - stage: Deploy
+    condition:
+      and(
+      succeeded(), 
+      eq(variables['Build.SourceBranch'], 'refs/heads/master')
+      )
+    dependsOn: Preview
+    jobs:
+      - job: "Deploy"
+        displayName: Deploy Solution
+        pool:
+          vmimage: windows-latest
+        steps:
+        - task: AzureResourceManagerTemplateDeployment@3
+          displayName: Deploy ARM
+          inputs:
+            deploymentScope: 'Resource Group'
+            azureResourceManagerConnection: 'YOUR CONNECTION'
+            subscriptionId: 'YOUR SUBSCRIPTION ID'
+            action: 'Create Or Update Resource Group'
+            resourceGroupName: 'YOUR RESOURCE GROUP NAME'
+            location: 'West Europe'
+            templateLocation: 'Linked artifact'
+            csmFile: '$(Build.SourcesDirectory)/YOUR DIRECTORY/azuredeploy.json'
+            csmParametersFile: '$(Build.SourcesDirectory)/YOUR DIRECTORY/azuredeploy.parameters.json'
+            deploymentMode: 'Complete'
+            deploymentName: 'AzureDataFactory'
+      - deployment: Dev
+        pool:
+          vmimage: windows-latest
+        # creates an environment if it doesn’t exist
+        environment: 'Dev'
+        strategy:
+          # default deployment strategy
+          runOnce:
+            deploy:
+              steps:
+              - script: echo Required to enable approvals
