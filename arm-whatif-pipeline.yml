@@ -37,8 +37,8 @@ stages:
             Inline: |
               $Parameters = @{
                 ResourcegroupName     = "YOUR RESOURCE GROUP NAME"
-                Templatefile          = ".\YOUR DIRECTORY/azuredeploy.json"
-                TemplateParameterfile = ".\YOUR DIRECTORY/azuredeploy.parameters.json"
+                Templatefile          = ".\YOUR DIRECTORY\azuredeploy.json"
+                TemplateParameterfile = ".\YOUR DIRECTORY\azuredeploy.parameters.json"
                 Mode                  = 'Complete'
               }
               $Result = Get-AzResourceGroupDeploymentWhatIfResult @Parameters
