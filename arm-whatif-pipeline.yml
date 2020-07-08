@@ -1,5 +1,6 @@
 # ARM Template What-If pipeline using complete mode. WARNING This CAN remove any resources that are not defined in the template from the target resource group.
 # This is a multistage pipeline and will support approvals set at the environment level in Azure DevOps.
+# $(VAR) denotes variables within a variable group attached to the pipeline.
 
 trigger:
 - "*"
@@ -38,8 +39,8 @@ stages:
             Inline: |
               $Parameters = @{
                 ResourcegroupName     = "$(resource-group)"
-                Templatefile          = ".\YOUR DIRECTORY/azuredeploy.json"
-                TemplateParameterfile = ".\YOUR DIRECTORY/azuredeploy.parameters.json"
+                Templatefile          = ".\YOUR DIRECTORY\azuredeploy.json"
+                TemplateParameterfile = ".\YOUR DIRECTORY\azuredeploy.parameters.json"
                 Mode                  = 'Complete'
               }
               $Result = Get-AzResourceGroupDeploymentWhatIfResult @Parameters
