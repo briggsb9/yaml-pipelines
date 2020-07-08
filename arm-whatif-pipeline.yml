@@ -1,4 +1,4 @@
-# ARM Template What-If pipeline using complete mode. WARNING This WILL remove anything in the resource group not defined in the template specified
+# ARM Template What-If pipeline using complete mode. WARNING This CAN remove any resources that are not defined in the template from the target resource group.
 
 trigger:
 - "*"
@@ -7,7 +7,7 @@ stages:
   - stage: Preview
     jobs:
       - job: 'Preview'
-        displayName: Preview Solution
+        displayName: Preview Changes
         pool:
           vmimage: windows-latest
         steps:
@@ -15,16 +15,16 @@ stages:
           displayName: Validate ARM
           inputs:
             deploymentScope: 'Resource Group'
-            azureResourceManagerConnection: 'YOUR CONNECTION'
-            subscriptionId: 'YOUR SUBSCRIPTION ID'
+            azureResourceManagerConnection: 'YOUR SERVICE CONNECTION'
+            subscriptionId: $(subscription-id)
             action: 'Create Or Update Resource Group'
-            resourceGroupName: 'YOUR RESOURCE GROUP NAME'
+            resourceGroupName: $(resource-group)
             location: 'West Europe'
             templateLocation: 'Linked artifact'
             csmFile: '$(Build.SourcesDirectory)/YOUR DIRECTORY/azuredeploy.json'
             csmParametersFile: '$(Build.SourcesDirectory)/YOUR DIRECTORY/azuredeploy.parameters.json'
             deploymentMode: 'Validation'
-            deploymentName: 'ADF'
+            deploymentName: 'SOLUTION'
         - task: PowerShell@2
           inputs:
             targetType: 'inline'
@@ -32,13 +32,13 @@ stages:
         - task: AzurePowerShell@5
           displayName: What-If Results
           inputs:
-            azureSubscription: 'YOUR SUBSCRIPTION'
+            azureSubscription: 'YOUR SERVICE CONNECTION'
             ScriptType: 'InlineScript'
             Inline: |
               $Parameters = @{
-                ResourcegroupName     = "YOUR RESOURCE GROUP NAME"
-                Templatefile          = ".\YOUR DIRECTORY\azuredeploy.json"
-                TemplateParameterfile = ".\YOUR DIRECTORY\azuredeploy.parameters.json"
+                ResourcegroupName     = "$(resource-group)"
+                Templatefile          = ".\YOUR DIRECTORY/azuredeploy.json"
+                TemplateParameterfile = ".\YOUR DIRECTORY/azuredeploy.parameters.json"
                 Mode                  = 'Complete'
               }
               $Result = Get-AzResourceGroupDeploymentWhatIfResult @Parameters
@@ -53,7 +53,7 @@ stages:
     dependsOn: Preview
     jobs:
       - job: "Deploy"
-        displayName: Deploy Solution
+        displayName: Deploy Changes
         pool:
           vmimage: windows-latest
         steps:
@@ -61,16 +61,16 @@ stages:
           displayName: Deploy ARM
           inputs:
             deploymentScope: 'Resource Group'
-            azureResourceManagerConnection: 'YOUR CONNECTION'
-            subscriptionId: 'YOUR SUBSCRIPTION ID'
+            azureResourceManagerConnection: 'YOUR SERVICE CONNECTION'
+            subscriptionId: $(subscription-id)
             action: 'Create Or Update Resource Group'
-            resourceGroupName: 'YOUR RESOURCE GROUP NAME'
+            resourceGroupName: $(resource-group)
             location: 'West Europe'
             templateLocation: 'Linked artifact'
             csmFile: '$(Build.SourcesDirectory)/YOUR DIRECTORY/azuredeploy.json'
             csmParametersFile: '$(Build.SourcesDirectory)/YOUR DIRECTORY/azuredeploy.parameters.json'
             deploymentMode: 'Complete'
-            deploymentName: 'AzureDataFactory'
+            deploymentName: 'SOLUTION'
       - deployment: Dev
         pool:
           vmimage: windows-latest
