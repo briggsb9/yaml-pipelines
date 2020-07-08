@@ -1,4 +1,5 @@
 # ARM Template What-If pipeline using complete mode. WARNING This CAN remove any resources that are not defined in the template from the target resource group.
+# This is a multistage pipeline and will support approvals set at the environment level in Azure DevOps.
 
 trigger:
 - "*"
