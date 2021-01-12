@@ -18,13 +18,13 @@ stages:
           inputs:
             deploymentScope: 'Resource Group'
             azureResourceManagerConnection: 'YOUR SERVICE CONNECTION'
-            subscriptionId: $(subscription-id)
+            subscriptionId: '$(subscription-id)'
             action: 'Create Or Update Resource Group'
-            resourceGroupName: $(resource-group)
-            location: 'West Europe'
+            resourceGroupName: '$(resource-group)'
+            location: '$(location)'
             templateLocation: 'Linked artifact'
-            csmFile: '$(Build.SourcesDirectory)/YOUR DIRECTORY/azuredeploy.json'
-            csmParametersFile: '$(Build.SourcesDirectory)/YOUR DIRECTORY/azuredeploy.parameters.json'
+            csmFile: '$(Build.SourcesDirectory)/mdw/azuredeploy.json'
+            csmParametersFile: '$(Build.SourcesDirectory)/$(dir-name)/azuredeploy.parameters.json'
             deploymentMode: 'Validation'
             deploymentName: 'SOLUTION'
         - task: PowerShell@2
@@ -34,13 +34,13 @@ stages:
         - task: AzurePowerShell@5
           displayName: What-If Results
           inputs:
-            azureSubscription: 'YOUR SERVICE CONNECTION'
+            azureSubscription: 'MPN-CloudDirect-Test'
             ScriptType: 'InlineScript'
             Inline: |
               $Parameters = @{
                 ResourcegroupName     = "$(resource-group)"
-                Templatefile          = ".\YOUR DIRECTORY\azuredeploy.json"
-                TemplateParameterfile = ".\YOUR DIRECTORY\azuredeploy.parameters.json"
+                Templatefile          = ".\$(dir-name)\azuredeploy.json"
+                TemplateParameterfile = ".\$(dir-name)\azuredeploy.parameters.json"
                 Mode                  = 'Complete'
               }
               $Result = Get-AzResourceGroupDeploymentWhatIfResult @Parameters
@@ -67,10 +67,10 @@ stages:
             subscriptionId: $(subscription-id)
             action: 'Create Or Update Resource Group'
             resourceGroupName: $(resource-group)
-            location: 'West Europe'
+            location: '$(location)'
             templateLocation: 'Linked artifact'
-            csmFile: '$(Build.SourcesDirectory)/YOUR DIRECTORY/azuredeploy.json'
-            csmParametersFile: '$(Build.SourcesDirectory)/YOUR DIRECTORY/azuredeploy.parameters.json'
+            csmFile: '$(Build.SourcesDirectory)/$(dir-name)/azuredeploy.json'
+            csmParametersFile: '$(Build.SourcesDirectory)/$(dir-name)/azuredeploy.parameters.json'
             deploymentMode: 'Complete'
             deploymentName: 'SOLUTION'
       - deployment: Dev
