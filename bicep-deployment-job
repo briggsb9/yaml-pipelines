@@ -1,0 +1,29 @@
+# Simple environment agnostic pipeline to deploy infrastructure using bicep and a parameters file. Uses a DevOps deployment job for deployment history across pipelines.
+
+trigger:
+- none
+
+stages:
+  - stage: Deploy
+    displayName: Deploy Stage
+    jobs:
+    - deployment: Deploy
+      displayName: Deploy
+      pool:
+        vmimage: ubuntu-latest
+      # creates an environment if it doesn’t exist
+      environment: '$(EnvironmentName)'
+      strategy:
+        # default deployment strategy
+        runOnce:
+          deploy:
+            steps:
+            - checkout: self
+            - task: AzureCLI@2
+              displayName: Deploy ODS Infrastructure
+              inputs:
+                azureSubscription: '$(ServiceConnectionName)'
+                scriptType: 'pscore'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  az deployment group create --name ODSCosmoDB --resource-group '$(ResourceGroupName)' --template-file '$(Build.SourcesDirectory)/Bicep/main.bicep' --parameters '$(Build.SourcesDirectory)/Parameters/$(ParametersFile)'
