@@ -1,0 +1,184 @@
+# ACR resource trigger that deploys to staging, preprod (deployment slot) and prod Web Apps. Includes security gate for Azure Defender for containers.
+trigger:
+  - none # Disable trigger on the repository itself
+
+# Trigger from container registry
+resources:
+  containers:
+  - container: YOUR REF
+    type: ACR  
+    azureSubscription: YOUR SERVICE CONNECTION
+    resourceGroup: YOUR RG
+    registry: YOUR REGISTRY
+    repository: YOUR ACR REPOSITORY
+    trigger:
+      tags:
+        include:
+        - Prod*
+
+variables:
+- name: SourceRegistryName
+  value: $(resources.container.plcontainer.registry)
+- name: Repository
+  value: $(resources.container.plcontainer.repository)
+- name: Tag
+  value: $(resources.container.plcontainer.tag)
+- group: shared-vars
+
+stages:
+  - stage: Staging
+    displayName: Staging
+    jobs:
+      # Track deployments on the environment.
+    - deployment: DeployContainer
+      displayName: Deploy Container
+      pool:
+        vmimage: ubuntu-latest
+      # Creates an environment if it doesn't exist.
+      environment: '$(AppName)-Staging'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - checkout: self
+            - task: AzureRmWebAppDeployment@4
+              displayName: App Service Deploy
+              inputs:
+                ConnectionType: 'AzureRM'
+                azureSubscription: '$(NonProdServiceConnectionName)'
+                appType: 'webAppContainer'
+                WebAppName: 'app-$(AppShortName)-uks-stag-001'
+                DockerNamespace: '$(NonProdAcrName).azurecr.io'
+                DockerRepository: '$(Repository)'
+                DockerImageTag: '$(Tag)'
+                AppSettings: '-DOCKER_REGISTRY_SERVER_URL https://$(NonProdAcrName).azurecr.io -DOCKER_REGISTRY_SERVER_USERNAME $(NonProdAcrUsername) -DOCKER_REGISTRY_SERVER_PASSWORD $(NonProdAcrPassword)'
+            - task: AzureAppServiceManage@0
+              displayName: Restart Staging
+              inputs:
+                azureSubscription: '$(NonProdServiceConnectionName)'
+                Action: 'Restart Azure App Service'
+                WebAppName: 'app-$(AppShortName)-uks-stag-001'
+            - task: AzureCLI@2
+              displayName: Lock ACR Image
+              inputs:
+                azureSubscription: '$(NonProdServiceConnectionName)'
+                scriptType: 'pscore'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  az acr repository update `
+                      --name $(NonProdAcrName) `
+                      --image $(Repository):$(Tag) `
+                      --write-enabled false
+  - stage: PreProduction
+    displayName: PreProduction
+    dependsOn: Staging
+    jobs:
+      # Track deployments on the environment.
+    - deployment: DeployContainer
+      displayName: Deploy Container
+      pool:
+        vmimage: ubuntu-latest
+      # Creates an environment if it doesn't exist.
+      environment: '$(AppName)-Prod'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - checkout: self
+            - task: AzureCLI@2
+              inputs:
+                azureSubscription: '$(NonProdServiceConnectionName)'
+                scriptType: 'pscore'
+                scriptLocation: 'scriptPath'
+                # Security Gate powershell script in same folder
+                scriptPath: '$(Build.SourcesDirectory)/tasks/ImageScanSummaryAssessmentGate.ps1'
+                arguments: '-registryName $(NonProdAcrName) -repository $(Repository) -tag $(Tag)'
+            - task: AzureCLI@2
+              displayName: Promote image
+              inputs:
+                azureSubscription: '$(ProdServiceConnectionName)'
+                scriptType: 'pscore'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  az acr import `
+                      --name $(ProdAcrName) `
+                      --source $(Repository):$(Tag) `
+                      --image $(Repository):$(Tag) `
+                      --registry $(NonProdAcrId)
+            - task: AzureAppServiceManage@0
+              displayName: Stop PreProduction Slot
+              inputs:
+                azureSubscription: '$(ProdServiceConnectionName)'
+                Action: 'Stop Azure App Service'
+                WebAppName: 'app-$(AppShortName)-uks-prod-001'
+                SpecifySlotOrASE: true
+                ResourceGroupName: 'rg-$(AppShortName)-prod-001'
+                Slot: 'preprod'
+            - task: AzureRmWebAppDeployment@4
+              displayName: Deploy To Slot
+              inputs:
+                ConnectionType: 'AzureRM'
+                azureSubscription: '$(ProdServiceConnectionName)'
+                appType: 'webAppContainer'
+                WebAppName: 'app-$(AppShortName)-uks-prod-001'
+                deployToSlotOrASE: true
+                ResourceGroupName: 'rg-$(AppShortName)-prod-001'
+                SlotName: 'preprod'
+                DockerNamespace: '$(ProdAcrName).azurecr.io'
+                DockerRepository: '$(Repository)'
+                DockerImageTag: '$(Tag)'
+                AppSettings: '-DOCKER_REGISTRY_SERVER_URL https://$(ProdAcrName).azurecr.io -DOCKER_REGISTRY_SERVER_USERNAME $(ProdAcrUsername) -DOCKER_REGISTRY_SERVER_PASSWORD $(ProdAcrPassword)'
+            - task: AzureAppServiceManage@0
+              displayName: Start PreProduction Slot
+              inputs:
+                azureSubscription: '$(ProdServiceConnectionName)'
+                Action: 'Start Azure App Service'
+                WebAppName: 'app-$(AppShortName)-uks-prod-001'
+                SpecifySlotOrASE: true
+                ResourceGroupName: 'rg-$(AppShortName)-prod-001'
+                Slot: 'preprod'
+  - stage: Production
+    displayName: Production
+    dependsOn: PreProduction
+    jobs:
+      # Track deployments on the environment.
+    - deployment: GoLive
+      displayName: Go Live
+      pool:
+        vmimage: ubuntu-latest
+      # Creates an environment if it doesn't exist.
+      environment: '$(AppName)-Prod'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - checkout: self
+            - task: AzureAppServiceManage@0
+              displayName: Swap To Production
+              inputs:
+                azureSubscription: '$(ProdServiceConnectionName)'
+                Action: 'Swap Slots'
+                WebAppName: 'app-$(AppShortName)-uks-prod-001'
+                ResourceGroupName: 'rg-$(AppShortName)-prod-001'
+                SourceSlot: 'preprod'
+            - task: AzureAppServiceManage@0
+              displayName: Stop PreProduction Slot
+              inputs:
+                azureSubscription: '$(ProdServiceConnectionName)'
+                Action: 'Stop Azure App Service'
+                WebAppName: 'app-$(AppShortName)-uks-prod-001'
+                SpecifySlotOrASE: true
+                ResourceGroupName: 'rg-$(AppShortName)-prod-001'
+                Slot: 'preprod'
+            - task: AzureCLI@2
+              displayName: Unlock Image
+              inputs:
+                azureSubscription: '$(NonProdServiceConnectionName)'
+                scriptType: 'pscore'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  az acr repository update `
+                      --name $(NonProdAcrName) `
+                      --image $(Repository) `
+                      --delete-enabled true `
+                      --write-enabled true
