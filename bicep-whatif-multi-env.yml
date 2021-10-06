@@ -1,0 +1,133 @@
+trigger:
+- none
+
+variables:
+  - group: shared-vars
+
+stages:
+  - stage: PreviewDev
+    displayName: Preview Dev
+    jobs:
+    - job: 'Preview'
+      displayName: Preview Changes
+      pool:
+        vmimage: ubuntu-latest
+      steps:
+      - task: AzureCLI@2
+        displayName: Bicep What-if
+        continueOnError: true
+        inputs:
+          azureSubscription: '$(NonProdServiceConnectionName)'
+          scriptType: 'pscore'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            az deployment group what-if --name $(AppName) --resource-group 'rg-$(AppShortName)-dev-001' --template-file '$(Build.SourcesDirectory)/bicep/main.bicep' --parameters '$(Build.SourcesDirectory)/parameters/$(AppShortName).dev.parameters.json' postgresAdminUsername='$(DevPostgresAdminUsername)' postgresAdminPassword='$(DevPostgresAdminPassword)'
+  - stage: Dev
+    displayName: Deploy Dev
+    dependsOn: PreviewDev
+    jobs:
+    - deployment: DeployInfra
+      displayName: Deploy Infrastructure
+      continueOnError: true
+      pool:
+        vmimage: ubuntu-latest
+      # creates an environment if it doesn’t exist
+      environment: '$(AppName)-Dev'
+      strategy:
+        # default deployment strategy
+        runOnce:
+          deploy:
+            steps:
+            - checkout: self
+            - task: AzureCLI@2
+              displayName: Deploy Bicep
+              inputs:
+                azureSubscription: '$(NonProdServiceConnectionName)'
+                scriptType: 'pscore'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  az deployment group create --name $(AppName) --resource-group 'rg-$(AppShortName)-dev-001' --template-file '$(Build.SourcesDirectory)/bicep/main.bicep' --parameters '$(Build.SourcesDirectory)/parameters/$(AppShortName).dev.parameters.json' postgresAdminUsername='$(DevPostgresAdminUsername)' postgresAdminPassword='$(DevPostgresAdminPassword)'
+  - stage: PreviewStag
+    displayName: Preview Staging
+    jobs:
+    - job: 'Preview'
+      displayName: Preview Changes
+      pool:
+        vmimage: ubuntu-latest
+      steps:
+      - task: AzureCLI@2
+        displayName: Bicep What-if
+        continueOnError: true
+        inputs:
+          azureSubscription: '$(NonProdServiceConnectionName)'
+          scriptType: 'pscore'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            az deployment group what-if --name $(AppName) --resource-group 'rg-$(AppShortName)-stag-001' --template-file '$(Build.SourcesDirectory)/bicep/main.bicep' --parameters '$(Build.SourcesDirectory)/parameters/$(AppShortName).stag.parameters.json' postgresAdminUsername='$(StagPostgresAdminUsername)' postgresAdminPassword='$(StagPostgresAdminPassword)'
+  - stage: Staging
+    displayName: Deploy Staging
+    dependsOn: PreviewStag
+    jobs:
+    - deployment: DeployInfra
+      displayName: Deploy Infrastructure
+      continueOnError: true
+      pool:
+        vmimage: ubuntu-latest
+      # creates an environment if it doesn’t exist
+      environment: '$(AppName)-Staging'
+      strategy:
+        # default deployment strategy
+        runOnce:
+          deploy:
+            steps:
+            - checkout: self
+            - task: AzureCLI@2
+              displayName: Deploy Bicep
+              inputs:
+                azureSubscription: '$(NonProdServiceConnectionName)'
+                scriptType: 'pscore'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  az deployment group create --name $(AppName) --resource-group 'rg-$(AppShortName)-stag-001' --template-file '$(Build.SourcesDirectory)/bicep/main.bicep' --parameters '$(Build.SourcesDirectory)/parameters/$(AppShortName).stag.parameters.json' postgresAdminUsername='$(StagPostgresAdminUsername)' postgresAdminPassword='$(StagPostgresAdminPassword)'
+  - stage: PreviewProd
+    displayName: Preview Prod
+    jobs:
+    - job: 'Preview'
+      displayName: Preview Changes
+      pool:
+        vmimage: ubuntu-latest
+      steps:
+      - task: AzureCLI@2
+        displayName: Bicep What-if
+        continueOnError: true
+        inputs:
+          azureSubscription: '$(ProdServiceConnectionName)'
+          scriptType: 'pscore'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            az deployment group what-if --name $(AppName) --resource-group 'rg-$(AppShortName)-prod-001' --template-file '$(Build.SourcesDirectory)/bicep/main.bicep' --parameters '$(Build.SourcesDirectory)/parameters/$(AppShortName).prod.parameters.json' postgresAdminUsername='$(ProdPostgresAdminUsername)' postgresAdminPassword='$(ProdPostgresAdminPassword)'
+  - stage: Prod
+    displayName: Deploy Prod
+    dependsOn: PreviewProd
+    jobs:
+    - deployment: DeployInfra
+      displayName: Deploy Infrastructure
+      continueOnError: true
+      pool:
+        vmimage: ubuntu-latest
+      # creates an environment if it doesn’t exist
+      environment: '$(AppName)-Prod'
+      strategy:
+        # default deployment strategy
+        runOnce:
+          deploy:
+            steps:
+            - checkout: self
+            - task: AzureCLI@2
+              displayName: Deploy Bicep
+              inputs:
+                azureSubscription: '$(ProdServiceConnectionName)'
+                scriptType: 'pscore'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  az deployment group create --name $(AppName) --resource-group 'rg-$(AppShortName)-prod-001' --template-file '$(Build.SourcesDirectory)/bicep/main.bicep' --parameters '$(Build.SourcesDirectory)/parameters/$(AppShortName).prod.parameters.json' postgresAdminUsername='$(ProdPostgresAdminUsername)' postgresAdminPassword='$(ProdPostgresAdminPassword)'
