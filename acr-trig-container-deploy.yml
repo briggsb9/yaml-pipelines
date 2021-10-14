@@ -1,20 +1,28 @@
-# ACR resource trigger that deploys to staging, preprod (deployment slot) and prod Web Apps. Includes security gate for Azure Defender for containers.
+# ACR resource trigger that deploys containers to dev, staging, preprod (deployment slot) and prod Web App for containers.
+# Includes Azure App configuration export based on tags
+# Images tagged with dev* will only push to dev environment.
+# Images tagged with prod will deploy to staging, preprod (slot) and prod.
+# Images to staging will be locked and then unlocked after prod or on error/cancel to prevent other deployments during testing.
+# Includes security gate for Azure Defender for containers.
+# Note: requires external variables passed in using shared group and/or pipeline vars.
+
 trigger:
   - none # Disable trigger on the repository itself
 
 # Trigger from container registry
 resources:
   containers:
-  - container: YOUR REF
+  - container: CONTAINER REF
     type: ACR  
-    azureSubscription: YOUR SERVICE CONNECTION
-    resourceGroup: YOUR RG
-    registry: YOUR REGISTRY
-    repository: YOUR ACR REPOSITORY
+    azureSubscription: SERVICE CONNECTION
+    resourceGroup: RESOURCE GROUP
+    registry: REGISTRY
+    repository: REPOSITORY
     trigger:
       tags:
         include:
-        - Prod*
+        - prod*
+        - dev*
 
 variables:
 - name: SourceRegistryName
@@ -23,10 +31,83 @@ variables:
   value: $(resources.container.plcontainer.repository)
 - name: Tag
   value: $(resources.container.plcontainer.tag)
+- name: IsDev
+  value: $[startsWith(variables['resources.container.plcontainer.tag'], 'dev')]
+- name: IsProd
+  value: $[startsWith(variables['resources.container.plcontainer.tag'], 'prod')]
 - group: shared-vars
 
 stages:
+  - stage: Dev
+    condition: eq(variables.IsDev, 'true')
+    displayName: Dev
+    jobs:
+      # Track deployments on the environment.
+    - deployment: DeployContainers
+      displayName: Deploy Containers
+      pool:
+        vmimage: ubuntu-latest
+      # Creates an environment if it doesn't exist.
+      environment: '$(AppName)-Dev'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - checkout: self
+            - task: AzureCLI@2
+              displayName: Web App Config
+              inputs:
+                azureSubscription: '$(NonProdServiceConnectionName)'
+                scriptType: 'bash'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  ID=$(az webapp show --name 'app-$(AppShortName)-uks-dev-001' --resource-group 'rg-$(AppShortName)-dev-001' --query id --output tsv) 
+                  az appconfig kv export --connection-string '$(AppConfigConnectionString)' --destination appservice --label '$(AppShortName)Dev' --yes --appservice-account $ID
+            - task: AzureRmWebAppDeployment@4
+              displayName: Web App Deploy
+              inputs:
+                ConnectionType: 'AzureRM'
+                azureSubscription: '$(NonProdServiceConnectionName)'
+                appType: 'webAppContainer'
+                WebAppName: 'app-$(AppShortName)-uks-dev-001'
+                DockerNamespace: '$(NonProdAcrName).azurecr.io'
+                DockerRepository: '$(Repository)'
+                DockerImageTag: '$(Tag)'
+                AppSettings: '-DOCKER_REGISTRY_SERVER_URL https://$(NonProdAcrName).azurecr.io -DOCKER_REGISTRY_SERVER_USERNAME $(NonProdAcrUsername) -DOCKER_REGISTRY_SERVER_PASSWORD $(NonProdAcrPassword)'
+            - task: AzureAppServiceManage@0
+              displayName: Web App Restart
+              inputs:
+                azureSubscription: '$(NonProdServiceConnectionName)'
+                Action: 'Restart Azure App Service'
+                WebAppName: 'app-$(AppShortName)-uks-dev-001'
+            - task: AzureCLI@2
+              displayName: BG App Config
+              inputs:
+                azureSubscription: '$(NonProdServiceConnectionName)'
+                scriptType: 'bash'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  ID=$(az webapp show --name 'app-$(AppShortName)-bg-uks-dev-001' --resource-group 'rg-$(AppShortName)-dev-001' --query id --output tsv) 
+                  az appconfig kv export --connection-string '$(AppConfigConnectionString)' --destination appservice --label '$(AppShortName)Dev' --yes --appservice-account $ID
+            - task: AzureRmWebAppDeployment@4
+              displayName: BG App Deploy
+              inputs:
+                ConnectionType: 'AzureRM'
+                azureSubscription: '$(NonProdServiceConnectionName)'
+                appType: 'webAppContainer'
+                WebAppName: 'app-$(AppShortName)-bg-uks-dev-001'
+                DockerNamespace: '$(NonProdAcrName).azurecr.io'
+                DockerRepository: '$(Repository)'
+                DockerImageTag: '$(Tag)'
+                AppSettings: '-DOCKER_REGISTRY_SERVER_URL https://$(NonProdAcrName).azurecr.io -DOCKER_REGISTRY_SERVER_USERNAME $(NonProdAcrUsername) -DOCKER_REGISTRY_SERVER_PASSWORD $(NonProdAcrPassword)'
+            - task: AzureAppServiceManage@0
+              displayName: BG App Restart
+              inputs:
+                azureSubscription: '$(NonProdServiceConnectionName)'
+                Action: 'Restart Azure App Service'
+                WebAppName: 'app-$(AppShortName)-bg-uks-dev-001'
   - stage: Staging
+    condition: eq(variables.IsProd, 'true')
     displayName: Staging
     jobs:
       # Track deployments on the environment.
@@ -41,8 +122,17 @@ stages:
           deploy:
             steps:
             - checkout: self
+            - task: AzureCLI@2
+              displayName: Web App Config
+              inputs:
+                azureSubscription: '$(NonProdServiceConnectionName)'
+                scriptType: 'bash'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  ID=$(az webapp show --name 'app-$(AppShortName)-uks-stag-001' --resource-group 'rg-$(AppShortName)-stag-001' --query id --output tsv) 
+                  az appconfig kv export --connection-string '$(AppConfigConnectionString)' --destination appservice --label '$(AppShortName)Stag' --yes --appservice-account $ID
             - task: AzureRmWebAppDeployment@4
-              displayName: App Service Deploy
+              displayName: Web App Deploy
               inputs:
                 ConnectionType: 'AzureRM'
                 azureSubscription: '$(NonProdServiceConnectionName)'
@@ -53,11 +143,37 @@ stages:
                 DockerImageTag: '$(Tag)'
                 AppSettings: '-DOCKER_REGISTRY_SERVER_URL https://$(NonProdAcrName).azurecr.io -DOCKER_REGISTRY_SERVER_USERNAME $(NonProdAcrUsername) -DOCKER_REGISTRY_SERVER_PASSWORD $(NonProdAcrPassword)'
             - task: AzureAppServiceManage@0
-              displayName: Restart Staging
+              displayName: Web App Restart
               inputs:
                 azureSubscription: '$(NonProdServiceConnectionName)'
                 Action: 'Restart Azure App Service'
                 WebAppName: 'app-$(AppShortName)-uks-stag-001'
+            - task: AzureCLI@2
+              displayName: BG App Config
+              inputs:
+                azureSubscription: '$(NonProdServiceConnectionName)'
+                scriptType: 'bash'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  ID=$(az webapp show --name 'app-$(AppShortName)-bg-uks-stag-001' --resource-group 'rg-$(AppShortName)-stag-001' --query id --output tsv) 
+                  az appconfig kv export --connection-string '$(AppConfigConnectionString)' --destination appservice --label '$(AppShortName)Stag' --yes --appservice-account $ID
+            - task: AzureRmWebAppDeployment@4
+              displayName: BG App Deploy
+              inputs:
+                ConnectionType: 'AzureRM'
+                azureSubscription: '$(NonProdServiceConnectionName)'
+                appType: 'webAppContainer'
+                WebAppName: 'app-$(AppShortName)-bg-uks-stag-001'
+                DockerNamespace: '$(NonProdAcrName).azurecr.io'
+                DockerRepository: '$(Repository)'
+                DockerImageTag: '$(Tag)'
+                AppSettings: '-DOCKER_REGISTRY_SERVER_URL https://$(NonProdAcrName).azurecr.io -DOCKER_REGISTRY_SERVER_USERNAME $(NonProdAcrUsername) -DOCKER_REGISTRY_SERVER_PASSWORD $(NonProdAcrPassword)'
+            - task: AzureAppServiceManage@0
+              displayName: BG App Restart
+              inputs:
+                azureSubscription: '$(NonProdServiceConnectionName)'
+                Action: 'Restart Azure App Service'
+                WebAppName: 'app-$(AppShortName)-bg-uks-stag-001'
             - task: AzureCLI@2
               displayName: Lock ACR Image
               inputs:
@@ -70,6 +186,7 @@ stages:
                       --image $(Repository):$(Tag) `
                       --write-enabled false
   - stage: PreProduction
+    condition: eq(variables.IsProd, 'true')
     displayName: PreProduction
     dependsOn: Staging
     jobs:
@@ -106,7 +223,7 @@ stages:
                       --image $(Repository):$(Tag) `
                       --registry $(NonProdAcrId)
             - task: AzureAppServiceManage@0
-              displayName: Stop PreProduction Slot
+              displayName: Stop Web App Slot
               inputs:
                 azureSubscription: '$(ProdServiceConnectionName)'
                 Action: 'Stop Azure App Service'
@@ -114,8 +231,17 @@ stages:
                 SpecifySlotOrASE: true
                 ResourceGroupName: 'rg-$(AppShortName)-prod-001'
                 Slot: 'preprod'
+            - task: AzureCLI@2
+              displayName: Web App Slot Config
+              inputs:
+                azureSubscription: '$(ProdServiceConnectionName)'
+                scriptType: 'bash'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  ID=$(az webapp show --name 'app-$(AppShortName)-uks-prod-001' --resource-group 'rg-$(AppShortName)-prod-001' --slot 'preprod' --query id --output tsv) 
+                  az appconfig kv export --connection-string '$(AppConfigConnectionString)' --destination appservice --label '$(AppShortName)Prod' --yes --appservice-account $ID
             - task: AzureRmWebAppDeployment@4
-              displayName: Deploy To Slot
+              displayName: Web App Deploy to Slot
               inputs:
                 ConnectionType: 'AzureRM'
                 azureSubscription: '$(ProdServiceConnectionName)'
@@ -129,7 +255,7 @@ stages:
                 DockerImageTag: '$(Tag)'
                 AppSettings: '-DOCKER_REGISTRY_SERVER_URL https://$(ProdAcrName).azurecr.io -DOCKER_REGISTRY_SERVER_USERNAME $(ProdAcrUsername) -DOCKER_REGISTRY_SERVER_PASSWORD $(ProdAcrPassword)'
             - task: AzureAppServiceManage@0
-              displayName: Start PreProduction Slot
+              displayName: Web App Start Slot
               inputs:
                 azureSubscription: '$(ProdServiceConnectionName)'
                 Action: 'Start Azure App Service'
@@ -138,6 +264,7 @@ stages:
                 ResourceGroupName: 'rg-$(AppShortName)-prod-001'
                 Slot: 'preprod'
   - stage: Production
+    condition: eq(variables.IsProd, 'true')
     displayName: Production
     dependsOn: PreProduction
     jobs:
@@ -171,14 +298,49 @@ stages:
                 ResourceGroupName: 'rg-$(AppShortName)-prod-001'
                 Slot: 'preprod'
             - task: AzureCLI@2
-              displayName: Unlock Image
+              displayName: BG App Config
               inputs:
-                azureSubscription: '$(NonProdServiceConnectionName)'
-                scriptType: 'pscore'
+                azureSubscription: '$(ProdServiceConnectionName)'
+                scriptType: 'bash'
                 scriptLocation: 'inlineScript'
                 inlineScript: |
-                  az acr repository update `
-                      --name $(NonProdAcrName) `
-                      --image $(Repository) `
-                      --delete-enabled true `
-                      --write-enabled true
+                  ID=$(az webapp show --name 'app-$(AppShortName)-bg-uks-prod-001' --resource-group 'rg-$(AppShortName)-prod-001' --query id --output tsv) 
+                  az appconfig kv export --connection-string '$(AppConfigConnectionString)' --destination appservice --label '$(AppShortName)Prod' --yes --appservice-account $ID
+            - task: AzureRmWebAppDeployment@4
+              displayName: BG App Deploy
+              inputs:
+                ConnectionType: 'AzureRM'
+                azureSubscription: '$(NonProdServiceConnectionName)'
+                appType: 'webAppContainer'
+                WebAppName: 'app-$(AppShortName)-bg-uks-prod-001'
+                DockerNamespace: '$(ProdAcrName).azurecr.io'
+                DockerRepository: '$(Repository)'
+                DockerImageTag: '$(Tag)'
+                AppSettings: '-DOCKER_REGISTRY_SERVER_URL https://$(ProdAcrName).azurecr.io -DOCKER_REGISTRY_SERVER_USERNAME $(ProdAcrUsername) -DOCKER_REGISTRY_SERVER_PASSWORD $(ProdAcrPassword)'
+            - task: AzureAppServiceManage@0
+              displayName: BG App Restart
+              inputs:
+                azureSubscription: '$(ProdServiceConnectionName)'
+                Action: 'Restart Azure App Service'
+                WebAppName: 'app-$(AppShortName)-bg-uks-prod-001'
+  - stage: UnlockImage
+    condition: and(always(), eq(variables.IsProd, 'true'))
+    displayName: UnlockImage
+    dependsOn: PreProduction
+    jobs:
+    - job:
+      pool:
+        vmimage: ubuntu-latest
+      steps:
+      - task: AzureCLI@2
+        displayName: Unlock Image
+        inputs:
+          azureSubscription: '$(NonProdServiceConnectionName)'
+          scriptType: 'pscore'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            az acr repository update `
+                --name $(NonProdAcrName) `
+                --image $(Repository) `
+                --delete-enabled true `
+                --write-enabled true
